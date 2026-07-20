@@ -6,7 +6,6 @@
 <title>Every Bothy</title>
 <meta name="description" content="A personal tracker for bagging every UK Mountain Bothies Association shelter." />
 
-<!-- Home screen / PWA behaviour -->
 <link rel="manifest" href="manifest.json" />
 <meta name="theme-color" content="#2F3B2E" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -22,6 +21,17 @@
     --moor: #2F3B2E;
     --rust: #A3572E;
     --stone: #6B7A7A;
+    --card: rgba(255,255,255,0.35);
+    --row-done: rgba(47,59,46,0.08);
+  }
+  [data-theme="dark"] {
+    --paper: #1C211B;
+    --ink: #EDE6D6;
+    --moor: #9FB89A;
+    --rust: #E08A54;
+    --stone: #8B9A9A;
+    --card: rgba(255,255,255,0.05);
+    --row-done: rgba(159,184,154,0.10);
   }
   * { box-sizing: border-box; }
   body {
@@ -29,22 +39,38 @@
     font-family: 'Iowan Old Style', Georgia, 'Times New Roman', serif;
     background: var(--paper);
     color: var(--ink);
-    background-image: radial-gradient(circle at 1px 1px, rgba(43,38,32,0.07) 1px, transparent 0);
+    background-image: radial-gradient(circle at 1px 1px, rgba(128,128,128,0.10) 1px, transparent 0);
     background-size: 18px 18px;
     padding-bottom: 40px;
+    transition: background .2s ease, color .2s ease;
   }
+  a { color: var(--rust); }
   .mono { font-family: 'Courier New', monospace; }
   header {
     border-bottom: 3px double var(--ink);
-    padding: 28px 20px 20px;
+    padding: 24px 20px 18px;
   }
-  .wrap { max-width: 780px; margin: 0 auto; }
+  .wrap { max-width: 800px; margin: 0 auto; }
+  .top-row { display:flex; justify-content:space-between; align-items:flex-start; gap: 10px; }
   h1 { font-size: 30px; margin: 0; font-weight: 400; letter-spacing: 0.5px; }
   .subhead { display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:8px; }
   .eyebrow { font-size: 12px; color: var(--stone); text-transform: uppercase; letter-spacing: 1.5px; }
-  p.tag { margin: 6px 0 20px; color: var(--stone); font-size: 14px; font-style: italic; }
+  p.tag { margin: 6px 0 16px; color: var(--stone); font-size: 14px; font-style: italic; }
 
-  .track { position: relative; height: 34px; }
+  .icon-btn {
+    background: transparent; border: 1.5px solid var(--moor); color: var(--moor);
+    border-radius: 50%; width: 34px; height: 34px; font-size: 16px; cursor: pointer;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+
+  .season-banner {
+    display:none;
+    font-size: 12.5px; padding: 8px 12px; margin: 10px 0 4px;
+    background: rgba(163,87,46,0.12); border: 1px solid var(--rust); border-radius: 4px; color: var(--ink);
+  }
+  .season-banner.show { display:block; }
+
+  .track { position: relative; height: 34px; margin-top: 6px; }
   .track .base {
     position: absolute; left:0; right:0; top:15px; height:2px;
     background: repeating-linear-gradient(90deg, var(--ink) 0 6px, transparent 6px 10px);
@@ -58,7 +84,7 @@
   }
   .stats { display:flex; justify-content:space-between; font-size:13px; color:var(--stone); }
 
-  .tabs { margin-top:18px; display:flex; gap:6px; align-items:center; }
+  .tabs { margin-top:16px; display:flex; gap:6px; align-items:center; flex-wrap: wrap; }
   .tab-btn {
     display:flex; align-items:center; gap:6px; padding:7px 14px;
     background:transparent; color: var(--moor); border:1.5px solid var(--moor);
@@ -67,7 +93,17 @@
   .tab-btn.active { background: var(--moor); color: var(--paper); }
   .hide-toggle { margin-left:auto; font-size:12px; color:var(--stone); display:flex; align-items:center; gap:6px; cursor:pointer; }
 
-  main { max-width:780px; margin:0 auto; padding:24px 20px 60px; }
+  .search-row { display:flex; gap:8px; margin-top:14px; }
+  .search-row input[type="text"] {
+    flex:1; font-family: inherit; font-size: 14px; padding: 8px 10px;
+    border: 1.5px solid var(--stone); border-radius: 3px; background: var(--paper); color: var(--ink);
+  }
+  .search-row select {
+    font-family: inherit; font-size: 13px; padding: 8px 8px;
+    border: 1.5px solid var(--stone); border-radius: 3px; background: var(--paper); color: var(--ink);
+  }
+
+  main { max-width:800px; margin:0 auto; padding:20px 20px 60px; }
 
   .region { margin-bottom:10px; }
   .region-btn {
@@ -75,25 +111,46 @@
     background:transparent; border:none; border-bottom:1.5px solid var(--ink);
     padding:10px 2px; cursor:pointer; font-family:inherit; text-align:left;
   }
-  .region-btn .left { display:flex; align-items:center; gap:8px; font-size:18px; }
-  .region-btn .right { font-family:'Courier New', monospace; font-size:12px; color:var(--stone); }
+  .region-btn .left { display:flex; align-items:center; gap:10px; font-size:18px; }
+  .region-btn .right { display:flex; align-items:center; gap:8px; font-family:'Courier New', monospace; font-size:12px; color:var(--stone); }
   .region-body { padding: 6px 0 6px 22px; display:none; }
   .region-body.open { display:block; }
+
+  .ring { flex-shrink: 0; }
 
   .cluster { margin-bottom:14px; }
   .cluster-name { font-size:12.5px; color:var(--rust); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; font-weight:600; }
 
-  .bothy-row { display:flex; align-items:flex-start; gap:10px; padding:7px 8px; margin-bottom:3px; border-radius:4px; cursor:pointer; }
-  .bothy-row.done { background: rgba(47,59,46,0.08); }
+  .bothy-card { margin-bottom:4px; border-radius:4px; overflow:hidden; }
+  .bothy-row { display:flex; align-items:flex-start; gap:10px; padding:7px 8px; cursor:pointer; }
+  .bothy-row.done { background: var(--row-done); }
   .checkbox { margin-top:2px; width:17px; height:17px; flex-shrink:0; border:1.5px solid var(--stone); border-radius:3px; display:flex; align-items:center; justify-content:center; }
   .checkbox.done { border-color: var(--moor); background: var(--moor); color: var(--paper); font-size: 12px; }
   .bothy-name { font-size: 15.5px; }
   .bothy-name.done { text-decoration: line-through; color: var(--stone); }
   .bothy-meta { font-size:12px; color:var(--stone); font-family:'Courier New', monospace; }
   .bothy-note { font-size:12px; color:var(--rust); font-style:italic; margin-top:1px; }
+  .info-toggle { background:none; border:none; color: var(--stone); font-size: 15px; cursor:pointer; padding: 2px 6px; flex-shrink:0; }
+
+  .bothy-detail { display:none; padding: 4px 8px 12px 39px; font-size: 13px; }
+  .bothy-detail.open { display:block; }
+  .detail-line { color: var(--stone); margin-bottom: 6px; font-family:'Courier New', monospace; font-size: 12px; }
+  .detail-line a { color: var(--rust); }
+  .detail-row { display:flex; gap:8px; align-items:center; margin-bottom:8px; flex-wrap:wrap; }
+  .detail-row label { font-size: 12px; color: var(--stone); }
+  .detail-row input[type="date"] {
+    font-family: inherit; font-size: 13px; padding: 4px 6px; border: 1px solid var(--stone);
+    border-radius: 3px; background: var(--paper); color: var(--ink);
+  }
+  .notes-box {
+    width: 100%; font-family: inherit; font-size: 13px; padding: 6px 8px;
+    border: 1px solid var(--stone); border-radius: 3px; background: var(--paper); color: var(--ink);
+    resize: vertical; min-height: 44px;
+  }
+  .notes-label { font-size: 11.5px; color: var(--stone); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 3px; }
 
   .plan-intro { font-size:13.5px; color:var(--stone); margin-bottom:20px; line-height:1.5; }
-  .cluster-card { border:1px solid var(--ink); border-radius:4px; padding:12px 14px; margin-bottom:12px; background: rgba(255,255,255,0.35); }
+  .cluster-card { border:1px solid var(--ink); border-radius:4px; padding:12px 14px; margin-bottom:12px; background: var(--card); }
   .cluster-card-head { display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:6px; }
   .cluster-card-title { font-size:16.5px; }
   .cluster-card-region { font-size:12px; color:var(--stone); margin-left:8px; }
@@ -102,18 +159,65 @@
   .chip { font-size:12.5px; padding:3px 9px; border-radius:12px; border:1px solid var(--moor); background: rgba(163,87,46,0.08); }
   .chip.done { border-color: var(--stone); color: var(--stone); text-decoration: line-through; background: transparent; }
 
-  footer { max-width:780px; margin:20px auto 0; padding: 0 20px; font-size:11.5px; color:var(--stone); text-align:center; }
+  .flat-list .bothy-card { border: 1px solid var(--stone); border-radius: 4px; margin-bottom: 6px; }
+  .flat-tag { font-size: 11px; color: var(--stone); }
+
+  /* Where next modal */
+  .modal-backdrop {
+    display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 50;
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-backdrop.show { display:flex; }
+  .modal {
+    background: var(--paper); color: var(--ink); border: 2px solid var(--ink); border-radius: 6px;
+    padding: 22px; max-width: 380px; width: 100%; text-align: center;
+  }
+  .modal .compass { font-size: 34px; margin-bottom: 6px; }
+  .modal h2 { margin: 6px 0 2px; font-size: 22px; font-weight: 400; }
+  .modal .modal-meta { font-size: 13px; color: var(--stone); margin-bottom: 4px; }
+  .modal .modal-actions { display:flex; gap:8px; justify-content:center; margin-top: 18px; }
+  .modal button {
+    font-family: inherit; font-size: 13px; padding: 8px 14px; border-radius: 3px; cursor: pointer;
+  }
+  .modal .btn-primary { background: var(--moor); color: var(--paper); border: 1.5px solid var(--moor); }
+  .modal .btn-secondary { background: transparent; color: var(--moor); border: 1.5px solid var(--moor); }
+
+  /* celebration */
+  .confetti-wrap { position: fixed; inset: 0; pointer-events: none; z-index: 60; overflow: hidden; }
+  .confetti-piece {
+    position: absolute; top: -20px; width: 8px; height: 14px; opacity: 0.9;
+    animation: fall linear forwards;
+  }
+  @keyframes fall {
+    to { transform: translateY(110vh) rotate(360deg); opacity: 0.7; }
+  }
+  .celebrate-banner {
+    position: fixed; left: 50%; top: 18px; transform: translateX(-50%);
+    background: var(--moor); color: var(--paper); padding: 10px 18px; border-radius: 20px;
+    font-size: 14px; z-index: 61; box-shadow: 0 3px 10px rgba(0,0,0,0.25);
+    opacity: 0; transition: opacity .3s ease;
+  }
+  .celebrate-banner.show { opacity: 1; }
+
+  footer { max-width:800px; margin:20px auto 0; padding: 0 20px; font-size:11.5px; color:var(--stone); text-align:center; }
 </style>
 </head>
 <body>
 
 <header>
   <div class="wrap">
-    <div class="subhead">
-      <h1>Every Bothy</h1>
-      <span class="eyebrow mono" id="totalLabel">from Shrewsbury</span>
+    <div class="top-row">
+      <div style="flex:1">
+        <div class="subhead">
+          <h1>Every Bothy</h1>
+          <span class="eyebrow mono" id="totalLabel">from Shrewsbury</span>
+        </div>
+        <p class="tag">A personal round of every Mountain Bothies Association shelter in the UK. No clock running — just miles.</p>
+      </div>
+      <button class="icon-btn" id="themeToggle" title="Toggle dark mode">☾</button>
     </div>
-    <p class="tag">A personal round of every Mountain Bothies Association shelter in the UK. No clock running — just miles.</p>
+
+    <div class="season-banner" id="seasonBanner"></div>
 
     <div class="track">
       <div class="base"></div>
@@ -129,9 +233,18 @@
     <div class="tabs">
       <button class="tab-btn active" data-view="checklist" id="tabChecklist">✓ Checklist</button>
       <button class="tab-btn" data-view="plan" id="tabPlan">⛰ Trip planner</button>
+      <button class="tab-btn" id="whereNextBtn">🧭 Where next?</button>
       <label class="hide-toggle" id="hideToggleWrap">
         <input type="checkbox" id="hideVisited" /> hide bagged
       </label>
+    </div>
+
+    <div class="search-row" id="searchRow">
+      <input type="text" id="searchInput" placeholder="Search by bothy or district…" />
+      <select id="sortSelect">
+        <option value="distance">Sort: distance</option>
+        <option value="name">Sort: A–Z</option>
+      </select>
     </div>
   </div>
 </header>
@@ -147,127 +260,1434 @@
   for current access restrictions before a trip. Distances are straight-line, not walking/driving miles.
 </footer>
 
+<div class="modal-backdrop" id="whereNextModal">
+  <div class="modal">
+    <div class="compass">🧭</div>
+    <div class="modal-meta" id="wnRegion">—</div>
+    <h2 id="wnName">—</h2>
+    <div class="modal-meta" id="wnMeta">—</div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="wnAnother">Another</button>
+      <button class="btn-primary" id="wnClose">Got it</button>
+    </div>
+  </div>
+</div>
+
 <script>
-// ---------- Data ----------
-const SHREWSBURY = { lat: 52.7069, lon: -2.7538 };
-
 const BOTHIES = [
-  { id:"arenig-fawr", name:"Arenig Fawr", region:"Wales", cluster:"Snowdonia", district:"Snowdonia", lat:52.929, lon:-3.712, sleeps:"3" },
-  { id:"cae-amos", name:"Cae Amos", region:"Wales", cluster:"Snowdonia", district:"Snowdonia", lat:52.986, lon:-4.211, sleeps:"—" },
-  { id:"dulyn", name:"Dulyn", region:"Wales", cluster:"Snowdonia", district:"Snowdonia", lat:53.179, lon:-3.939, sleeps:"0 + 10 floor" },
-  { id:"penrhos-isaf", name:"Penrhos Isaf", region:"Wales", cluster:"Snowdonia", district:"Snowdonia", lat:52.798, lon:-3.874, sleeps:"—" },
-  { id:"lluest-cwm-bach", name:"Lluest Cwm Bach", region:"Wales", cluster:"Cambrian Mountains", district:"Cambrian Mountains", lat:52.321, lon:-3.614, sleeps:"6–7" },
-  { id:"moel-prysgau", name:"Moel Prysgau", region:"Wales", cluster:"Cambrian Mountains", district:"Cambrian Mountains", lat:52.235, lon:-3.750, sleeps:"many" },
-  { id:"nant-rhys", name:"Nant Rhys", region:"Wales", cluster:"Cambrian Mountains", district:"Cambrian Mountains", lat:52.399, lon:-3.711, sleeps:"—" },
-  { id:"nant-syddion", name:"Nant Syddion", region:"Wales", cluster:"Cambrian Mountains", district:"Cambrian Mountains", lat:52.396, lon:-3.804, sleeps:"18+" },
-  { id:"grwyne-fawr", name:"Grwyne Fawr", region:"Wales", cluster:"Black Mountains", district:"Black Mountains", lat:51.974, lon:-3.129, sleeps:"4" },
-
-  { id:"dubs-hut", name:"Dubs Hut", region:"Northern England & Borders", cluster:"Lake District", district:"Lake District", lat:54.510, lon:-3.223, sleeps:"—" },
-  { id:"great-lingy-hut", name:"Great Lingy Hut", region:"Northern England & Borders", cluster:"Lake District", district:"Lake District", lat:54.694, lon:-3.068, sleeps:"3–4" },
-  { id:"mosedale-cottage", name:"Mosedale Cottage", region:"Northern England & Borders", cluster:"Lake District", district:"Lake District", lat:54.478, lon:-2.781, sleeps:"12+ floor" },
-  { id:"warnscale-head", name:"Warnscale Head", region:"Northern England & Borders", cluster:"Lake District", district:"Lake District", lat:54.508, lon:-3.228, sleeps:"0", note:"Not suitable for overnight per MBA" },
-  { id:"cross-fell", name:"Cross Fell (Greg's Hut)", region:"Northern England & Borders", cluster:"North Pennines", district:"North Pennines", lat:54.713, lon:-2.481, sleeps:"6–10" },
-  { id:"kershopehead", name:"Kershopehead", region:"Northern England & Borders", cluster:"North Pennines", district:"North Pennines", lat:55.169, lon:-2.717, sleeps:"2 + 10 floor" },
-  { id:"flittingford", name:"Flittingford", region:"Northern England & Borders", cluster:"Kielder", district:"Kielder", lat:55.192, lon:-2.387, sleeps:"4" },
-  { id:"green", name:"Green", region:"Northern England & Borders", cluster:"Kielder", district:"Kielder", lat:55.101, lon:-2.409, sleeps:"—", note:"Closed until further notice" },
-  { id:"haughtongreen", name:"Haughtongreen", region:"Northern England & Borders", cluster:"Kielder", district:"Kielder", lat:55.035, lon:-2.333, sleeps:"—" },
-  { id:"roughside", name:"Roughside", region:"Northern England & Borders", cluster:"Kielder", district:"Kielder", lat:55.143, lon:-2.401, sleeps:"—" },
-  { id:"wainhope", name:"Wainhope", region:"Northern England & Borders", cluster:"Kielder", district:"Kielder", lat:55.226, lon:-2.519, sleeps:"—" },
-  { id:"spithope", name:"Spithope", region:"Northern England & Borders", cluster:"Cheviots", district:"Cheviots", lat:55.344, lon:-2.367, sleeps:"—" },
-
-  { id:"clennoch", name:"Clennoch", region:"Southern Scotland", cluster:"Galloway", district:"Galloway", lat:55.276, lon:-4.201, sleeps:"6" },
-  { id:"tunskeen", name:"Tunskeen", region:"Southern Scotland", cluster:"Galloway", district:"Galloway", lat:55.184, lon:-4.476, sleeps:"6" },
-  { id:"white-laggan", name:"White Laggan", region:"Southern Scotland", cluster:"Galloway", district:"Galloway", lat:55.068, lon:-4.403, sleeps:"6" },
-  { id:"brattleburn", name:"Brattleburn", region:"Southern Scotland", cluster:"Lowther Hills", district:"Lowther Hills", lat:55.346, lon:-3.554, sleeps:"2 + attic" },
-  { id:"burleywhag", name:"Burleywhag", region:"Southern Scotland", cluster:"Lowther Hills", district:"Lowther Hills", lat:55.284, lon:-3.622, sleeps:"2" },
-  { id:"kettleton-byre", name:"Kettleton Byre", region:"Southern Scotland", cluster:"Lowther Hills", district:"Lowther Hills", lat:55.301, lon:-3.716, sleeps:"4" },
-  { id:"dryfehead", name:"Dryfehead", region:"Southern Scotland", cluster:"Dumfriesshire", district:"Dumfriesshire", lat:55.286, lon:-3.308, sleeps:"6" },
-  { id:"gameshope", name:"Gameshope", region:"Southern Scotland", cluster:"Dumfriesshire", district:"Dumfriesshire", lat:55.453, lon:-3.371, sleeps:"8" },
-  { id:"greensykes", name:"Greensykes", region:"Southern Scotland", cluster:"Dumfriesshire", district:"Dumfriesshire", lat:55.290, lon:-3.084, sleeps:"8" },
-  { id:"over-phawhope", name:"Over Phawhope", region:"Southern Scotland", cluster:"Dumfriesshire", district:"Dumfriesshire", lat:55.361, lon:-3.293, sleeps:"8" },
-  { id:"leysburnfoot", name:"Leysburnfoot (Will's Bothy)", region:"Southern Scotland", cluster:"Liddesdale", district:"Liddesdale", lat:55.272, lon:-2.732, sleeps:"—" },
-
-  { id:"doune-byre", name:"Doune Byre", region:"Southwest Highlands & Islands", cluster:"Loch Lomond (West Highland Way)", district:"Loch Lomond", lat:56.293, lon:-4.696, sleeps:"4" },
-  { id:"mark-cottage", name:"Mark Cottage", region:"Southwest Highlands & Islands", cluster:"Loch Lomond (West Highland Way)", district:"Loch Lomond", lat:56.116, lon:-4.849, sleeps:"6" },
-  { id:"rowchoish", name:"Rowchoish", region:"Southwest Highlands & Islands", cluster:"Loch Lomond (West Highland Way)", district:"Loch Lomond", lat:56.202, lon:-4.684, sleeps:"12" },
-  { id:"abyssinia", name:"Abyssinia", region:"Southwest Highlands & Islands", cluster:"Loch Lomond (West Highland Way)", district:"Glen Kinglas", lat:56.266, lon:-4.818, sleeps:"8" },
-  { id:"cadderlie", name:"Cadderlie", region:"Southwest Highlands & Islands", cluster:"Argyll", district:"North Argyll", lat:56.486, lon:-5.175, sleeps:"4" },
-  { id:"carron", name:"Carron", region:"Southwest Highlands & Islands", cluster:"Argyll", district:"Knapdale", lat:56.145, lon:-5.311, sleeps:"2 + floor" },
-  { id:"druimnashallog", name:"Druimnashallog", region:"Southwest Highlands & Islands", cluster:"Argyll", district:"Lorne", lat:56.294, lon:-5.396, sleeps:"0" },
-  { id:"leacraithnaich", name:"Leacraithnaich", region:"Southwest Highlands & Islands", cluster:"Ardgour & Sunart", district:"Ardgour", lat:56.562, lon:-5.676, sleeps:"4" },
-  { id:"resourie", name:"Resourie", region:"Southwest Highlands & Islands", cluster:"Ardgour & Sunart", district:"Ardgour", lat:56.781, lon:-5.502, sleeps:"10" },
-  { id:"taigh-seumas", name:"Taigh Seumas a' Ghlinne", region:"Southwest Highlands & Islands", cluster:"Ardgour & Sunart", district:"Glen Duror", lat:56.635, lon:-5.227, sleeps:"4" },
-  { id:"essan", name:"Essan", region:"Southwest Highlands & Islands", cluster:"Ardgour & Sunart", district:"Inverailort", lat:56.875, lon:-5.584, sleeps:"12" },
-  { id:"cruib", name:"Cruib", region:"Southwest Highlands & Islands", cluster:"Isle of Jura", district:"Jura", lat:55.977, lon:-5.902, sleeps:"5" },
-  { id:"glengarrisdale", name:"Glengarrisdale", region:"Southwest Highlands & Islands", cluster:"Isle of Jura", district:"Jura", lat:56.107, lon:-5.790, sleeps:"4" },
-  { id:"tomsleibhe", name:"Tomsleibhe", region:"Southwest Highlands & Islands", cluster:"Isle of Mull", district:"Mull", lat:56.466, lon:-5.869, sleeps:"10" },
-
-  { id:"achadh-nan-darach", name:"Achadh-nan-darach", region:"Central Highlands", cluster:"Fort Augustus & Monadhliath", district:"Fort Augustus", lat:57.112, lon:-4.787, sleeps:"many" },
-  { id:"blackburn-corrieyairack", name:"Blackburn of Corrieyairack", region:"Central Highlands", cluster:"Fort Augustus & Monadhliath", district:"Monadhliath", lat:57.088, lon:-4.672, sleeps:"0 + 8 floor" },
-  { id:"glenbuck", name:"Glenbuck", region:"Central Highlands", cluster:"Fort Augustus & Monadhliath", district:"Monadhliath", lat:57.057, lon:-4.746, sleeps:"many" },
-  { id:"luib-chonnal", name:"Luib Chonnal", region:"Central Highlands", cluster:"Fort Augustus & Monadhliath", district:"Monadhliath", lat:57.006, lon:-4.646, sleeps:"0 + attic" },
-  { id:"ben-alder-cottage", name:"Ben Alder Cottage", region:"Central Highlands", cluster:"Ben Alder & Rannoch", district:"Rannoch", lat:56.779, lon:-4.459, sleeps:"4" },
-  { id:"culra", name:"Culra", region:"Central Highlands", cluster:"Ben Alder & Rannoch", district:"Ben Alder", lat:56.854, lon:-4.424, sleeps:"0", note:"Demolished, rebuild planned" },
-  { id:"gorton", name:"Gorton", region:"Central Highlands", cluster:"Ben Alder & Rannoch", district:"Rannoch", lat:56.597, lon:-4.649, sleeps:"0 + floor" },
-  { id:"lairig-leacach", name:"Lairig Leacach", region:"Central Highlands", cluster:"Corrour & Mamores", district:"Lochaber", lat:56.823, lon:-4.816, sleeps:"8" },
-  { id:"loch-chiarain", name:"Loch Chiarain", region:"Central Highlands", cluster:"Corrour & Mamores", district:"Lochaber", lat:56.731, lon:-4.798, sleeps:"1 + large attic" },
-  { id:"meanach", name:"Meanach", region:"Central Highlands", cluster:"Corrour & Mamores", district:"Lochaber", lat:56.775, lon:-4.839, sleeps:"3" },
-  { id:"staoineag", name:"Staoineag", region:"Central Highlands", cluster:"Corrour & Mamores", district:"Lochaber", lat:56.771, lon:-4.791, sleeps:"many" },
-
-  { id:"corrour", name:"Corrour", region:"Eastern Highlands", cluster:"Cairngorms West", district:"Cairngorms", lat:57.042, lon:-3.681, sleeps:"4", note:"Lairig Ghru — often crowded" },
-  { id:"faindouran", name:"Faindouran", region:"Eastern Highlands", cluster:"Cairngorms West", district:"Cairngorms", lat:57.137, lon:-3.519, sleeps:"2 + attic" },
-  { id:"fords-of-avon", name:"Fords of Avon Refuge", region:"Eastern Highlands", cluster:"Cairngorms West", district:"Cairngorms", lat:57.110, lon:-3.584, sleeps:"0", note:"Emergency refuge only" },
-  { id:"garbh-choire", name:"Garbh Choire Refuge", region:"Eastern Highlands", cluster:"Cairngorms West", district:"Cairngorms", lat:57.067, lon:-3.718, sleeps:"0", note:"Emergency refuge only" },
-  { id:"hutchison-memorial", name:"Hutchison Memorial Hut", region:"Eastern Highlands", cluster:"Cairngorms West", district:"Cairngorms", lat:57.078, lon:-3.613, sleeps:"2 + 4 floor" },
-  { id:"ruigh-aiteachain", name:"Ruigh Aiteachain", region:"Eastern Highlands", cluster:"Cairngorms West", district:"Glenfeshie", lat:57.012, lon:-3.900, sleeps:"10+ attic" },
-  { id:"ryvoan", name:"Ryvoan", region:"Eastern Highlands", cluster:"Cairngorms West", district:"Cairngorms", lat:57.184, lon:-3.646, sleeps:"4" },
-  { id:"tarf-hotel", name:"Tarf Hotel (Feith Uaine)", region:"Eastern Highlands", cluster:"Cairngorms West", district:"Badenoch", lat:56.889, lon:-3.763, sleeps:"7", note:"Remote" },
-  { id:"allt-scheicheachan", name:"Allt Scheicheachan", region:"Eastern Highlands", cluster:"Cairngorms West", district:"Badenoch", lat:56.840, lon:-3.912, sleeps:"2 + attic" },
-  { id:"callater-stable", name:"Callater Stable", region:"Eastern Highlands", cluster:"Deeside & Mounth", district:"Mounth", lat:56.944, lon:-3.353, sleeps:"8" },
-  { id:"charr", name:"Charr", region:"Eastern Highlands", cluster:"Deeside & Mounth", district:"Mounth", lat:56.938, lon:-2.633, sleeps:"3" },
-  { id:"gelder-shiel", name:"Gelder Shiel Stable", region:"Eastern Highlands", cluster:"Deeside & Mounth", district:"Balmoral", lat:56.995, lon:-3.224, sleeps:"6" },
-  { id:"glas-allt-shiel", name:"Glas Allt Shiel", region:"Eastern Highlands", cluster:"Deeside & Mounth", district:"Loch Muick", lat:56.927, lon:-3.191, sleeps:"6 in attic" },
-  { id:"shielin-of-mark", name:"Shielin of Mark", region:"Eastern Highlands", cluster:"Deeside & Mounth", district:"Mounth", lat:56.930, lon:-3.092, sleeps:"2" },
-  { id:"ruighe-ealasaid", name:"Ruighe Ealasaid (Red House)", region:"Eastern Highlands", cluster:"Deeside & Mounth", district:"Mar Lodge", lat:56.962, lon:-3.643, sleeps:"—" },
-
-  { id:"a-chuil", name:"A' Chuil", region:"Western Highlands", cluster:"Glenfinnan & Knoydart", district:"Lochaber", lat:56.977, lon:-5.384, sleeps:"7", note:"Busy but rarely full" },
-  { id:"gleann-dubh-lighe", name:"Gleann Dubh-lighe", region:"Western Highlands", cluster:"Glenfinnan & Knoydart", district:"Lochaber", lat:56.884, lon:-5.375, sleeps:"2+" },
-  { id:"glenpean", name:"Glenpean", region:"Western Highlands", cluster:"Glenfinnan & Knoydart", district:"Lochaber", lat:56.958, lon:-5.396, sleeps:"2 + large attic" },
-  { id:"invermallie", name:"Invermallie", region:"Western Highlands", cluster:"Glenfinnan & Knoydart", district:"Lochaber", lat:56.953, lon:-5.067, sleeps:"4 + large attic", note:"Busy" },
-  { id:"kinbreack", name:"Kinbreack", region:"Western Highlands", cluster:"Glenfinnan & Knoydart", district:"Lochaber", lat:57.013, lon:-5.292, sleeps:"0 + small attic" },
-  { id:"oban-bothy", name:"Oban", region:"Western Highlands", cluster:"Glenfinnan & Knoydart", district:"Lochaber", lat:56.952, lon:-5.515, sleeps:"many" },
-  { id:"sourlies", name:"Sourlies", region:"Western Highlands", cluster:"Glenfinnan & Knoydart", district:"Lochaber", lat:56.997, lon:-5.513, sleeps:"8", note:"Busy in summer" },
-  { id:"suardalan", name:"Suardalan", region:"Western Highlands", cluster:"Glenelg", district:"Lochaber", lat:57.197, lon:-5.506, sleeps:"9" },
-  { id:"dibidil", name:"Dibidil", region:"Western Highlands", cluster:"Isle of Rùm", district:"Rùm", lat:56.952, lon:-6.289, sleeps:"6" },
-  { id:"guirdil", name:"Guirdil", region:"Western Highlands", cluster:"Isle of Rùm", district:"Rùm", lat:57.025, lon:-6.418, sleeps:"4+" },
-
-  { id:"bearnais", name:"Bearnais", region:"North West Highlands & Islands", cluster:"Kintail & Affric", district:"Wester Ross", lat:57.434, lon:-5.298, sleeps:"2" },
-  { id:"camban", name:"Camban", region:"North West Highlands & Islands", cluster:"Kintail & Affric", district:"Kintail", lat:57.214, lon:-5.225, sleeps:"many" },
-  { id:"coire-fionnaraich", name:"Coire Fionnaraich", region:"North West Highlands & Islands", cluster:"Kintail & Affric", district:"Wester Ross", lat:57.476, lon:-5.421, sleeps:"many" },
-  { id:"maol-bhuidhe", name:"Maol Bhuidhe", region:"North West Highlands & Islands", cluster:"Kintail & Affric", district:"Wester Ross", lat:57.372, lon:-5.241, sleeps:"many in attic" },
-  { id:"craig", name:"Craig", region:"North West Highlands & Islands", cluster:"Applecross & Torridon", district:"Wester Ross", lat:57.610, lon:-5.727, sleeps:"many" },
-  { id:"easan-dorcha", name:"Easan Dorcha (The Teahouse)", region:"North West Highlands & Islands", cluster:"Applecross & Torridon", district:"Wester Ross", lat:57.519, lon:-5.323, sleeps:"0", note:"Tiny — 3 max on the floor" },
-  { id:"uags", name:"Uags", region:"North West Highlands & Islands", cluster:"Applecross & Torridon", district:"Applecross", lat:57.349, lon:-5.787, sleeps:"1 + attic" },
-  { id:"camasunary", name:"Camasunary (new)", region:"North West Highlands & Islands", cluster:"Isle of Skye", district:"Skye", lat:57.190, lon:-6.112, sleeps:"16" },
-  { id:"lookout", name:"Lookout (Rubha Hunish)", region:"North West Highlands & Islands", cluster:"Isle of Skye", district:"Skye", lat:57.701, lon:-6.344, sleeps:"3+", note:"Ex-coastguard station, great views" },
-  { id:"ollisdal", name:"Ollisdal", region:"North West Highlands & Islands", cluster:"Isle of Skye", district:"Skye", lat:57.360, lon:-6.636, sleeps:"small" },
-  { id:"taigh-thormoid", name:"Taigh Thormoid Dhuibh (Raasay)", region:"North West Highlands & Islands", cluster:"Isle of Skye", district:"Raasay", lat:57.499, lon:-5.988, sleeps:"6" },
-  { id:"uisinis", name:"Uisinis", region:"North West Highlands & Islands", cluster:"Outer Hebrides", district:"South Uist", lat:57.280, lon:-7.231, sleeps:"4" },
-
-  { id:"glencoul", name:"Glencoul", region:"Northern Highlands", cluster:"Assynt", district:"Sutherland", lat:58.228, lon:-4.947, sleeps:"4", note:"Best approached by water" },
-  { id:"glendhu", name:"Glendhu", region:"Northern Highlands", cluster:"Assynt", district:"Sutherland", lat:58.259, lon:-4.928, sleeps:"0 + upstairs" },
-  { id:"knockdamph", name:"Knockdamph", region:"Northern Highlands", cluster:"Assynt", district:"Sutherland", lat:57.915, lon:-4.895, sleeps:"many" },
-  { id:"schoolhouse-duag", name:"Schoolhouse, Duag Bridge", region:"Northern Highlands", cluster:"Assynt", district:"Sutherland", lat:57.935, lon:-4.805, sleeps:"5" },
-  { id:"suileag", name:"Suileag", region:"Northern Highlands", cluster:"Assynt", district:"Sutherland", lat:58.140, lon:-5.145, sleeps:"8" },
-  { id:"coiremor", name:"Coiremor, Magoo's Bothy", region:"Northern Highlands", cluster:"Assynt", district:"Ross-shire", lat:57.857, lon:-4.858, sleeps:"many" },
-  { id:"shenavall", name:"Shenavall", region:"Northern Highlands", cluster:"Assynt", district:"Wester Ross", lat:57.777, lon:-5.254, sleeps:"many", note:"Busy" },
-  { id:"achnanclach", name:"Achnanclach", region:"Northern Highlands", cluster:"North Sutherland", district:"Sutherland", lat:58.427, lon:-4.346, sleeps:"many" },
-  { id:"croft-house", name:"Croft House, Lochstrathy", region:"Northern Highlands", cluster:"North Sutherland", district:"Sutherland", lat:58.412, lon:-4.067, sleeps:"many" },
-  { id:"strabeg", name:"Strabeg", region:"Northern Highlands", cluster:"North Sutherland", district:"Sutherland", lat:58.425, lon:-4.756, sleeps:"many" },
-  { id:"kearvaig", name:"Kearvaig", region:"Northern Highlands", cluster:"Cape Wrath & Sandwood", district:"Sutherland", lat:58.609, lon:-4.941, sleeps:"2 + attic" },
-  { id:"strathan", name:"Strathan", region:"Northern Highlands", cluster:"Cape Wrath & Sandwood", district:"Sutherland", lat:58.503, lon:-5.010, sleeps:"2+", note:"Near Sandwood Bay" },
-  { id:"strathchailleach", name:"Strathchailleach", region:"Northern Highlands", cluster:"Cape Wrath & Sandwood", district:"Sutherland", lat:58.545, lon:-5.010, sleeps:"2", note:"Near Sandwood Bay" },
+  {
+    "id": "achnanclach",
+    "name": "Achnanclach",
+    "region": "Northern Highlands",
+    "cluster": "North Sutherland",
+    "district": "Sutherland",
+    "lat": 58.427,
+    "lon": -4.346,
+    "sleeps": "many",
+    "gridRef": "NC630511",
+    "elevation": 148,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/northern-highlands/achnanclach/"
+  },
+  {
+    "id": "coiremor",
+    "name": "Coiremor, Magoo's Bothy",
+    "region": "Northern Highlands",
+    "cluster": "Assynt",
+    "district": "Ross-shire",
+    "lat": 57.857,
+    "lon": -4.858,
+    "sleeps": "many",
+    "gridRef": "NH305888",
+    "elevation": 318,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/northern-highlands/coiremor-choire-mhoir/"
+  },
+  {
+    "id": "croft-house",
+    "name": "Croft House, Lochstrathy",
+    "region": "Northern Highlands",
+    "cluster": "North Sutherland",
+    "district": "Sutherland",
+    "lat": 58.412,
+    "lon": -4.067,
+    "sleeps": "many",
+    "gridRef": "NC793490",
+    "elevation": 160,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/northern-highlands/croft-house-lochstrathy/"
+  },
+  {
+    "id": "glencoul",
+    "name": "Glencoul",
+    "region": "Northern Highlands",
+    "cluster": "Assynt",
+    "district": "Sutherland",
+    "lat": 58.228,
+    "lon": -4.947,
+    "sleeps": "4",
+    "gridRef": "NC270303",
+    "elevation": 11,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/northern-highlands/glencoul/",
+    "note": "Best approached by water"
+  },
+  {
+    "id": "glendhu",
+    "name": "Glendhu",
+    "region": "Northern Highlands",
+    "cluster": "Assynt",
+    "district": "Sutherland",
+    "lat": 58.259,
+    "lon": -4.928,
+    "sleeps": "0 + upstairs",
+    "gridRef": "NC283337",
+    "elevation": 25,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/northern-highlands/glendhu/"
+  },
+  {
+    "id": "kearvaig",
+    "name": "Kearvaig",
+    "region": "Northern Highlands",
+    "cluster": "Cape Wrath & Sandwood",
+    "district": "Sutherland",
+    "lat": 58.609,
+    "lon": -4.941,
+    "sleeps": "2 + attic",
+    "gridRef": "NC292727",
+    "elevation": 9,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/northern-highlands/kearvaig/"
+  },
+  {
+    "id": "knockdamph",
+    "name": "Knockdamph",
+    "region": "Northern Highlands",
+    "cluster": "Assynt",
+    "district": "Sutherland",
+    "lat": 57.915,
+    "lon": -4.895,
+    "sleeps": "many",
+    "gridRef": "NH285953",
+    "elevation": 233,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/northern-highlands/knockdamph/"
+  },
+  {
+    "id": "schoolhouse-duag",
+    "name": "Schoolhouse, Duag Bridge",
+    "region": "Northern Highlands",
+    "cluster": "Assynt",
+    "district": "Sutherland",
+    "lat": 57.935,
+    "lon": -4.805,
+    "sleeps": "5",
+    "gridRef": "NH340975",
+    "elevation": 99,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/northern-highlands/schoolhouse-duag-bridge/"
+  },
+  {
+    "id": "shenavall",
+    "name": "Shenavall",
+    "region": "Northern Highlands",
+    "cluster": "Assynt",
+    "district": "Wester Ross",
+    "lat": 57.777,
+    "lon": -5.254,
+    "sleeps": "many",
+    "gridRef": "NH066810",
+    "elevation": 128,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/northern-highlands/shenavall/",
+    "note": "Busy"
+  },
+  {
+    "id": "strabeg",
+    "name": "Strabeg",
+    "region": "Northern Highlands",
+    "cluster": "North Sutherland",
+    "district": "Sutherland",
+    "lat": 58.425,
+    "lon": -4.756,
+    "sleeps": "many",
+    "gridRef": "NC391518",
+    "elevation": 35,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/northern-highlands/strabeg/"
+  },
+  {
+    "id": "strathan",
+    "name": "Strathan",
+    "region": "Northern Highlands",
+    "cluster": "Cape Wrath & Sandwood",
+    "district": "Sutherland",
+    "lat": 58.503,
+    "lon": -5.01,
+    "sleeps": "2+",
+    "gridRef": "NC247612",
+    "elevation": 62,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/northern-highlands/strathan/",
+    "note": "Near Sandwood Bay"
+  },
+  {
+    "id": "strathchailleach",
+    "name": "Strathchailleach",
+    "region": "Northern Highlands",
+    "cluster": "Cape Wrath & Sandwood",
+    "district": "Sutherland",
+    "lat": 58.545,
+    "lon": -5.01,
+    "sleeps": "2",
+    "gridRef": "NC249658",
+    "elevation": 95,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/northern-highlands/strathchailleach/",
+    "note": "Near Sandwood Bay"
+  },
+  {
+    "id": "suileag",
+    "name": "Suileag",
+    "region": "Northern Highlands",
+    "cluster": "Assynt",
+    "district": "Sutherland",
+    "lat": 58.14,
+    "lon": -5.145,
+    "sleeps": "8",
+    "gridRef": "NC149212",
+    "elevation": 137,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/northern-highlands/suileag/"
+  },
+  {
+    "id": "bearnais",
+    "name": "Bearnais",
+    "region": "North West Highlands & Islands",
+    "cluster": "Kintail & Affric",
+    "district": "Wester Ross",
+    "lat": 57.434,
+    "lon": -5.298,
+    "sleeps": "2",
+    "gridRef": "NH021431",
+    "elevation": 279,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/north-west-highlands-islands/bearnais/"
+  },
+  {
+    "id": "camasunary",
+    "name": "Camasunary (new)",
+    "region": "North West Highlands & Islands",
+    "cluster": "Isle of Skye",
+    "district": "Skye",
+    "lat": 57.19,
+    "lon": -6.112,
+    "sleeps": "16",
+    "gridRef": "NG517183",
+    "elevation": 5,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/north-west-highlands-islands/camasunary/"
+  },
+  {
+    "id": "camban",
+    "name": "Camban",
+    "region": "North West Highlands & Islands",
+    "cluster": "Kintail & Affric",
+    "district": "Kintail",
+    "lat": 57.214,
+    "lon": -5.225,
+    "sleeps": "many",
+    "gridRef": "NH053184",
+    "elevation": 279,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/north-west-highlands-islands/camban/"
+  },
+  {
+    "id": "coire-fionnaraich",
+    "name": "Coire Fionnaraich",
+    "region": "North West Highlands & Islands",
+    "cluster": "Kintail & Affric",
+    "district": "Wester Ross",
+    "lat": 57.476,
+    "lon": -5.421,
+    "sleeps": "many",
+    "gridRef": "NG950480",
+    "elevation": 180,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/north-west-highlands-islands/coire-fionnaraich/"
+  },
+  {
+    "id": "craig",
+    "name": "Craig",
+    "region": "North West Highlands & Islands",
+    "cluster": "Applecross & Torridon",
+    "district": "Wester Ross",
+    "lat": 57.61,
+    "lon": -5.727,
+    "sleeps": "many",
+    "gridRef": "NG774639",
+    "elevation": 83,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/north-west-highlands-islands/craig/"
+  },
+  {
+    "id": "easan-dorcha",
+    "name": "Easan Dorcha (The Teahouse)",
+    "region": "North West Highlands & Islands",
+    "cluster": "Applecross & Torridon",
+    "district": "Wester Ross",
+    "lat": 57.519,
+    "lon": -5.323,
+    "sleeps": "0",
+    "gridRef": "NH012526",
+    "elevation": 215,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/north-west-highlands-islands/easan-dorcha-the-teahouse/",
+    "note": "Tiny — 3 max on the floor"
+  },
+  {
+    "id": "lookout",
+    "name": "Lookout (Rubha Hunish)",
+    "region": "North West Highlands & Islands",
+    "cluster": "Isle of Skye",
+    "district": "Skye",
+    "lat": 57.701,
+    "lon": -6.344,
+    "sleeps": "3+",
+    "gridRef": "NG412763",
+    "elevation": 82,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/north-west-highlands-islands/lookout-rubha-hunish/",
+    "note": "Ex-coastguard station, great views"
+  },
+  {
+    "id": "maol-bhuidhe",
+    "name": "Maol Bhuidhe",
+    "region": "North West Highlands & Islands",
+    "cluster": "Kintail & Affric",
+    "district": "Wester Ross",
+    "lat": 57.372,
+    "lon": -5.241,
+    "sleeps": "many in attic",
+    "gridRef": "NH053360",
+    "elevation": 261,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/north-west-highlands-islands/maol-bhuidhe/"
+  },
+  {
+    "id": "ollisdal",
+    "name": "Ollisdal",
+    "region": "North West Highlands & Islands",
+    "cluster": "Isle of Skye",
+    "district": "Skye",
+    "lat": 57.36,
+    "lon": -6.636,
+    "sleeps": "small",
+    "gridRef": "NG213394",
+    "elevation": 89,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/north-west-highlands-islands/ollisdal/"
+  },
+  {
+    "id": "taigh-thormoid",
+    "name": "Taigh Thormoid Dhuibh (Raasay)",
+    "region": "North West Highlands & Islands",
+    "cluster": "Isle of Skye",
+    "district": "Raasay",
+    "lat": 57.499,
+    "lon": -5.988,
+    "sleeps": "6",
+    "gridRef": "NG612524",
+    "elevation": 15,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/north-west-highlands-islands/taigh-thormoid-dhuibh-raasay/"
+  },
+  {
+    "id": "uags",
+    "name": "Uags",
+    "region": "North West Highlands & Islands",
+    "cluster": "Applecross & Torridon",
+    "district": "Applecross",
+    "lat": 57.349,
+    "lon": -5.787,
+    "sleeps": "1 + attic",
+    "gridRef": "NG723351",
+    "elevation": 23,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/north-west-highlands-islands/uags/"
+  },
+  {
+    "id": "uisinis",
+    "name": "Uisinis",
+    "region": "North West Highlands & Islands",
+    "cluster": "Outer Hebrides",
+    "district": "South Uist",
+    "lat": 57.28,
+    "lon": -7.231,
+    "sleeps": "4",
+    "gridRef": "NF849332",
+    "elevation": 24,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/north-west-highlands-islands/uisinis/"
+  },
+  {
+    "id": "a-chuil",
+    "name": "A' Chuil",
+    "region": "Western Highlands",
+    "cluster": "Glenfinnan & Knoydart",
+    "district": "Lochaber",
+    "lat": 56.977,
+    "lon": -5.384,
+    "sleeps": "7",
+    "gridRef": "NM944924",
+    "elevation": 137,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/western-highlands-islands/achuil/",
+    "note": "Busy but rarely full"
+  },
+  {
+    "id": "gleann-dubh-lighe",
+    "name": "Gleann Dubh-lighe",
+    "region": "Western Highlands",
+    "cluster": "Glenfinnan & Knoydart",
+    "district": "Lochaber",
+    "lat": 56.884,
+    "lon": -5.375,
+    "sleeps": "2+",
+    "gridRef": "NM945820",
+    "elevation": 128,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/western-highlands-islands/gleann-dubh-lighe/"
+  },
+  {
+    "id": "glenpean",
+    "name": "Glenpean",
+    "region": "Western Highlands",
+    "cluster": "Glenfinnan & Knoydart",
+    "district": "Lochaber",
+    "lat": 56.958,
+    "lon": -5.396,
+    "sleeps": "2 + large attic",
+    "gridRef": "NM936904",
+    "elevation": 106,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/western-highlands-islands/glenpean/"
+  },
+  {
+    "id": "invermallie",
+    "name": "Invermallie",
+    "region": "Western Highlands",
+    "cluster": "Glenfinnan & Knoydart",
+    "district": "Lochaber",
+    "lat": 56.953,
+    "lon": -5.067,
+    "sleeps": "4 + large attic",
+    "gridRef": "NN136888",
+    "elevation": 45,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/western-highlands-islands/invermallie/",
+    "note": "Busy"
+  },
+  {
+    "id": "kinbreack",
+    "name": "Kinbreack",
+    "region": "Western Highlands",
+    "cluster": "Glenfinnan & Knoydart",
+    "district": "Lochaber",
+    "lat": 57.013,
+    "lon": -5.292,
+    "sleeps": "0 + small attic",
+    "gridRef": "NN002961",
+    "elevation": 182,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/western-highlands-islands/kinbreack/"
+  },
+  {
+    "id": "oban-bothy",
+    "name": "Oban",
+    "region": "Western Highlands",
+    "cluster": "Glenfinnan & Knoydart",
+    "district": "Lochaber",
+    "lat": 56.952,
+    "lon": -5.515,
+    "sleeps": "many",
+    "gridRef": "NM863901",
+    "elevation": 11,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/western-highlands-islands/oban/"
+  },
+  {
+    "id": "sourlies",
+    "name": "Sourlies",
+    "region": "Western Highlands",
+    "cluster": "Glenfinnan & Knoydart",
+    "district": "Lochaber",
+    "lat": 56.997,
+    "lon": -5.513,
+    "sleeps": "8",
+    "gridRef": "NM868951",
+    "elevation": 24,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/western-highlands-islands/sourlies/",
+    "note": "Busy in summer"
+  },
+  {
+    "id": "suardalan",
+    "name": "Suardalan",
+    "region": "Western Highlands",
+    "cluster": "Glenelg",
+    "district": "Lochaber",
+    "lat": 57.197,
+    "lon": -5.506,
+    "sleeps": "9",
+    "gridRef": "NG883173",
+    "elevation": 113,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/western-highlands-islands/suardalan/"
+  },
+  {
+    "id": "dibidil",
+    "name": "Dibidil",
+    "region": "Western Highlands",
+    "cluster": "Isle of Rum",
+    "district": "Rum",
+    "lat": 56.952,
+    "lon": -6.289,
+    "sleeps": "6",
+    "gridRef": "NM393928",
+    "elevation": 29,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/western-highlands-islands/dibidil/"
+  },
+  {
+    "id": "guirdil",
+    "name": "Guirdil",
+    "region": "Western Highlands",
+    "cluster": "Isle of Rum",
+    "district": "Rum",
+    "lat": 57.025,
+    "lon": -6.418,
+    "sleeps": "4+",
+    "gridRef": "NG320014",
+    "elevation": 21,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/western-highlands-islands/guirdil/"
+  },
+  {
+    "id": "abyssinia",
+    "name": "Abyssinia",
+    "region": "Southwest Highlands & Islands",
+    "cluster": "Loch Lomond (West Highland Way)",
+    "district": "Glen Kinglas",
+    "lat": 56.266,
+    "lon": -4.818,
+    "sleeps": "8",
+    "gridRef": "NN256117",
+    "elevation": 250,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/southwest-highlands-islands/abyssinia/"
+  },
+  {
+    "id": "cadderlie",
+    "name": "Cadderlie",
+    "region": "Southwest Highlands & Islands",
+    "cluster": "Argyll",
+    "district": "North Argyll",
+    "lat": 56.486,
+    "lon": -5.175,
+    "sleeps": "4",
+    "gridRef": "NN047370",
+    "elevation": 14,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/southwest-highlands-islands/cadderlie/"
+  },
+  {
+    "id": "carron",
+    "name": "Carron",
+    "region": "Southwest Highlands & Islands",
+    "cluster": "Argyll",
+    "district": "Knapdale",
+    "lat": 56.145,
+    "lon": -5.311,
+    "sleeps": "2 + floor",
+    "gridRef": "NR944996",
+    "elevation": 188,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/southwest-highlands-islands/carron/"
+  },
+  {
+    "id": "cruib",
+    "name": "Cruib",
+    "region": "Southwest Highlands & Islands",
+    "cluster": "Isle of Jura",
+    "district": "Jura",
+    "lat": 55.977,
+    "lon": -5.902,
+    "sleeps": "5",
+    "gridRef": "NR567829",
+    "elevation": 2,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/southwest-highlands-islands/cruib/"
+  },
+  {
+    "id": "doune-byre",
+    "name": "Doune Byre",
+    "region": "Southwest Highlands & Islands",
+    "cluster": "Loch Lomond (West Highland Way)",
+    "district": "Loch Lomond",
+    "lat": 56.293,
+    "lon": -4.696,
+    "sleeps": "4",
+    "gridRef": "NN332144",
+    "elevation": 71,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/southwest-highlands-islands/doune-byre/",
+    "note": "West Highland Way"
+  },
+  {
+    "id": "druimnashallog",
+    "name": "Druimnashallog",
+    "region": "Southwest Highlands & Islands",
+    "cluster": "Argyll",
+    "district": "Lorne",
+    "lat": 56.294,
+    "lon": -5.396,
+    "sleeps": "0",
+    "gridRef": "NM898164",
+    "elevation": 160,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/southwest-highlands-islands/druimnashallag/"
+  },
+  {
+    "id": "essan",
+    "name": "Essan",
+    "region": "Southwest Highlands & Islands",
+    "cluster": "Ardgour & Sunart",
+    "district": "Inverailort",
+    "lat": 56.875,
+    "lon": -5.584,
+    "sleeps": "12",
+    "gridRef": "NM817817",
+    "elevation": 34,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/southwest-highlands-islands/essan/"
+  },
+  {
+    "id": "glengarrisdale",
+    "name": "Glengarrisdale",
+    "region": "Southwest Highlands & Islands",
+    "cluster": "Isle of Jura",
+    "district": "Jura",
+    "lat": 56.107,
+    "lon": -5.79,
+    "sleeps": "4",
+    "gridRef": "NR644970",
+    "elevation": 7,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/southwest-highlands-islands/glengarrisdale/"
+  },
+  {
+    "id": "leacraithnaich",
+    "name": "Leacraithnaich",
+    "region": "Southwest Highlands & Islands",
+    "cluster": "Ardgour & Sunart",
+    "district": "Ardgour",
+    "lat": 56.562,
+    "lon": -5.676,
+    "sleeps": "4",
+    "gridRef": "NM742472",
+    "elevation": 148,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/southwest-highlands-islands/leacraithnaich/"
+  },
+  {
+    "id": "mark-cottage",
+    "name": "Mark Cottage",
+    "region": "Southwest Highlands & Islands",
+    "cluster": "Loch Lomond (West Highland Way)",
+    "district": "Loch Lomond",
+    "lat": 56.116,
+    "lon": -4.849,
+    "sleeps": "6",
+    "gridRef": "NS229952",
+    "elevation": 9,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/southwest-highlands-islands/mark-cottage/"
+  },
+  {
+    "id": "resourie",
+    "name": "Resourie",
+    "region": "Southwest Highlands & Islands",
+    "cluster": "Ardgour & Sunart",
+    "district": "Ardgour",
+    "lat": 56.781,
+    "lon": -5.502,
+    "sleeps": "10",
+    "gridRef": "NM861710",
+    "elevation": 139,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/southwest-highlands-islands/resourie/"
+  },
+  {
+    "id": "rowchoish",
+    "name": "Rowchoish",
+    "region": "Southwest Highlands & Islands",
+    "cluster": "Loch Lomond (West Highland Way)",
+    "district": "Loch Lomond",
+    "lat": 56.202,
+    "lon": -4.684,
+    "sleeps": "12",
+    "gridRef": "NN336043",
+    "elevation": 41,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/southwest-highlands-islands/rowchoish/",
+    "note": "West Highland Way"
+  },
+  {
+    "id": "taigh-seumas",
+    "name": "Taigh Seumas a' Ghlinne",
+    "region": "Southwest Highlands & Islands",
+    "cluster": "Ardgour & Sunart",
+    "district": "Glen Duror",
+    "lat": 56.635,
+    "lon": -5.227,
+    "sleeps": "4",
+    "gridRef": "NN022539",
+    "elevation": 203,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/southwest-highlands-islands/taigh-seumas-a-ghlinne-glenduror/"
+  },
+  {
+    "id": "tomsleibhe",
+    "name": "Tomsleibhe",
+    "region": "Southwest Highlands & Islands",
+    "cluster": "Isle of Mull",
+    "district": "Mull",
+    "lat": 56.466,
+    "lon": -5.869,
+    "sleeps": "10",
+    "gridRef": "NM617372",
+    "elevation": 94,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/southwest-highlands-islands/tomsleibhe/"
+  },
+  {
+    "id": "achadh-nan-darach",
+    "name": "Achadh-nan-darach",
+    "region": "Central Highlands",
+    "cluster": "Fort Augustus & Monadhliath",
+    "district": "Fort Augustus",
+    "lat": 57.112,
+    "lon": -4.787,
+    "sleeps": "many",
+    "gridRef": "NH313057",
+    "elevation": 140,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/central-highlands/achadh-nan-darach/"
+  },
+  {
+    "id": "ben-alder-cottage",
+    "name": "Ben Alder Cottage",
+    "region": "Central Highlands",
+    "cluster": "Ben Alder & Rannoch",
+    "district": "Rannoch",
+    "lat": 56.779,
+    "lon": -4.459,
+    "sleeps": "4",
+    "gridRef": "NN499680",
+    "elevation": 373,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/central-highlands/ben-alder-cottage/"
+  },
+  {
+    "id": "blackburn-corrieyairack",
+    "name": "Blackburn of Corrieyairack",
+    "region": "Central Highlands",
+    "cluster": "Fort Augustus & Monadhliath",
+    "district": "Monadhliath",
+    "lat": 57.088,
+    "lon": -4.672,
+    "sleeps": "0 + 8 floor",
+    "gridRef": "NH382029",
+    "elevation": 344,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/central-highlands/blackburn-of-corrieyairack/"
+  },
+  {
+    "id": "culra",
+    "name": "Culra",
+    "region": "Central Highlands",
+    "cluster": "Ben Alder & Rannoch",
+    "district": "Ben Alder",
+    "lat": 56.854,
+    "lon": -4.424,
+    "sleeps": "0",
+    "gridRef": "NN523762",
+    "elevation": 457,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/central-highlands/culra/",
+    "note": "Demolished, rebuild planned"
+  },
+  {
+    "id": "glenbuck",
+    "name": "Glenbuck",
+    "region": "Central Highlands",
+    "cluster": "Fort Augustus & Monadhliath",
+    "district": "Monadhliath",
+    "lat": 57.057,
+    "lon": -4.746,
+    "sleeps": "many",
+    "gridRef": "NN336996",
+    "elevation": 283,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/central-highlands/glenbuck/"
+  },
+  {
+    "id": "gorton",
+    "name": "Gorton",
+    "region": "Central Highlands",
+    "cluster": "Ben Alder & Rannoch",
+    "district": "Rannoch",
+    "lat": 56.597,
+    "lon": -4.649,
+    "sleeps": "0 + floor",
+    "gridRef": "NN375481",
+    "elevation": 299,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/central-highlands/gorton/"
+  },
+  {
+    "id": "lairig-leacach",
+    "name": "Lairig Leacach",
+    "region": "Central Highlands",
+    "cluster": "Corrour & Mamores",
+    "district": "Lochaber",
+    "lat": 56.823,
+    "lon": -4.816,
+    "sleeps": "8",
+    "gridRef": "NN282738",
+    "elevation": 467,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/central-highlands/lairig-leacach/",
+    "note": "Busy"
+  },
+  {
+    "id": "loch-chiarain",
+    "name": "Loch Chiarain",
+    "region": "Central Highlands",
+    "cluster": "Corrour & Mamores",
+    "district": "Lochaber",
+    "lat": 56.731,
+    "lon": -4.798,
+    "sleeps": "1 + large attic",
+    "gridRef": "NN289634",
+    "elevation": 370,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/central-highlands/loch-chiarain/"
+  },
+  {
+    "id": "luib-chonnal",
+    "name": "Luib Chonnal",
+    "region": "Central Highlands",
+    "cluster": "Fort Augustus & Monadhliath",
+    "district": "Monadhliath",
+    "lat": 57.006,
+    "lon": -4.646,
+    "sleeps": "0 + attic",
+    "gridRef": "NN394936",
+    "elevation": 331,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/central-highlands/luib-chonnal/"
+  },
+  {
+    "id": "meanach",
+    "name": "Meanach",
+    "region": "Central Highlands",
+    "cluster": "Corrour & Mamores",
+    "district": "Lochaber",
+    "lat": 56.775,
+    "lon": -4.839,
+    "sleeps": "3",
+    "gridRef": "NN266685",
+    "elevation": 345,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/central-highlands/meanach/"
+  },
+  {
+    "id": "staoineag",
+    "name": "Staoineag",
+    "region": "Central Highlands",
+    "cluster": "Corrour & Mamores",
+    "district": "Lochaber",
+    "lat": 56.771,
+    "lon": -4.791,
+    "sleeps": "many",
+    "gridRef": "NN296678",
+    "elevation": 293,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/central-highlands/staoineag/"
+  },
+  {
+    "id": "corrour",
+    "name": "Corrour",
+    "region": "Eastern Highlands",
+    "cluster": "Cairngorms West",
+    "district": "Cairngorms",
+    "lat": 57.042,
+    "lon": -3.681,
+    "sleeps": "4",
+    "gridRef": "NN981958",
+    "elevation": 564,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/eastern-highlands/corrour/",
+    "note": "Lairig Ghru — often crowded"
+  },
+  {
+    "id": "faindouran",
+    "name": "Faindouran",
+    "region": "Eastern Highlands",
+    "cluster": "Cairngorms West",
+    "district": "Cairngorms",
+    "lat": 57.137,
+    "lon": -3.519,
+    "sleeps": "2 + attic",
+    "gridRef": "NJ082062",
+    "elevation": 603,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/eastern-highlands/faindouran/"
+  },
+  {
+    "id": "fords-of-avon",
+    "name": "Fords of Avon Refuge",
+    "region": "Eastern Highlands",
+    "cluster": "Cairngorms West",
+    "district": "Cairngorms",
+    "lat": 57.11,
+    "lon": -3.584,
+    "sleeps": "0",
+    "gridRef": "NJ042032",
+    "elevation": 689,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/eastern-highlands/fords-of-avon-refuge/",
+    "note": "Emergency refuge only"
+  },
+  {
+    "id": "garbh-choire",
+    "name": "Garbh Choire Refuge",
+    "region": "Eastern Highlands",
+    "cluster": "Cairngorms West",
+    "district": "Cairngorms",
+    "lat": 57.067,
+    "lon": -3.718,
+    "sleeps": "0",
+    "gridRef": "NN959986",
+    "elevation": 710,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/eastern-highlands/garbh-choire-refuge/",
+    "note": "Emergency refuge only"
+  },
+  {
+    "id": "hutchison-memorial",
+    "name": "Hutchison Memorial Hut",
+    "region": "Eastern Highlands",
+    "cluster": "Cairngorms West",
+    "district": "Cairngorms",
+    "lat": 57.078,
+    "lon": -3.613,
+    "sleeps": "2 + 4 floor",
+    "gridRef": "NO023998",
+    "elevation": 747,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/eastern-highlands/hutchison-memorial-hut-etchachan/"
+  },
+  {
+    "id": "ruigh-aiteachain",
+    "name": "Ruigh Aiteachain",
+    "region": "Eastern Highlands",
+    "cluster": "Cairngorms West",
+    "district": "Glenfeshie",
+    "lat": 57.012,
+    "lon": -3.9,
+    "sleeps": "10+ attic",
+    "gridRef": "NN847928",
+    "elevation": 389,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/eastern-highlands/ruigh-aiteachain/"
+  },
+  {
+    "id": "ryvoan",
+    "name": "Ryvoan",
+    "region": "Eastern Highlands",
+    "cluster": "Cairngorms West",
+    "district": "Cairngorms",
+    "lat": 57.184,
+    "lon": -3.646,
+    "sleeps": "4",
+    "gridRef": "NJ006115",
+    "elevation": 394,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/eastern-highlands/ryvoan/"
+  },
+  {
+    "id": "tarf-hotel",
+    "name": "Tarf Hotel (Feith Uaine)",
+    "region": "Eastern Highlands",
+    "cluster": "Cairngorms West",
+    "district": "Badenoch",
+    "lat": 56.889,
+    "lon": -3.763,
+    "sleeps": "7",
+    "gridRef": "NN927789",
+    "elevation": 566,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/eastern-highlands/tarf-hotel-feith-uaine/",
+    "note": "Remote"
+  },
+  {
+    "id": "allt-scheicheachan",
+    "name": "Allt Scheicheachan",
+    "region": "Eastern Highlands",
+    "cluster": "Cairngorms West",
+    "district": "Badenoch",
+    "lat": 56.84,
+    "lon": -3.912,
+    "sleeps": "2 + attic",
+    "gridRef": "NN835737",
+    "elevation": 487,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/eastern-highlands/allt-scheicheachan/"
+  },
+  {
+    "id": "callater-stable",
+    "name": "Callater Stable",
+    "region": "Eastern Highlands",
+    "cluster": "Deeside & Mounth",
+    "district": "Mounth",
+    "lat": 56.944,
+    "lon": -3.353,
+    "sleeps": "8",
+    "gridRef": "NO178845",
+    "elevation": 514,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/eastern-highlands/callater-stable/"
+  },
+  {
+    "id": "charr",
+    "name": "Charr",
+    "region": "Eastern Highlands",
+    "cluster": "Deeside & Mounth",
+    "district": "Mounth",
+    "lat": 56.938,
+    "lon": -2.633,
+    "sleeps": "3",
+    "gridRef": "NO616831",
+    "elevation": 264,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/eastern-highlands/charr/"
+  },
+  {
+    "id": "gelder-shiel",
+    "name": "Gelder Shiel Stable",
+    "region": "Eastern Highlands",
+    "cluster": "Deeside & Mounth",
+    "district": "Balmoral",
+    "lat": 56.995,
+    "lon": -3.224,
+    "sleeps": "6",
+    "gridRef": "NO258900",
+    "elevation": 444,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/eastern-highlands/gelder-shiel-stable/"
+  },
+  {
+    "id": "glas-allt-shiel",
+    "name": "Glas Allt Shiel",
+    "region": "Eastern Highlands",
+    "cluster": "Deeside & Mounth",
+    "district": "Loch Muick",
+    "lat": 56.927,
+    "lon": -3.191,
+    "sleeps": "6 in attic",
+    "gridRef": "NO276824",
+    "elevation": 400,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/eastern-highlands/glas-allt-shiel/"
+  },
+  {
+    "id": "shielin-of-mark",
+    "name": "Shielin of Mark",
+    "region": "Eastern Highlands",
+    "cluster": "Deeside & Mounth",
+    "district": "Mounth",
+    "lat": 56.93,
+    "lon": -3.092,
+    "sleeps": "2",
+    "gridRef": "NO337827",
+    "elevation": 644,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/eastern-highlands/shielin-of-mark/"
+  },
+  {
+    "id": "ruighe-ealasaid",
+    "name": "Ruighe Ealasaid (Red House)",
+    "region": "Eastern Highlands",
+    "cluster": "Deeside & Mounth",
+    "district": "Mar Lodge",
+    "lat": 56.962,
+    "lon": -3.643,
+    "sleeps": "—",
+    "gridRef": "NO003869",
+    "elevation": 439,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/eastern-highlands/ruighe-ealasaid-the-red-house/"
+  },
+  {
+    "id": "brattleburn",
+    "name": "Brattleburn",
+    "region": "Southern Scotland",
+    "cluster": "Lowther Hills",
+    "district": "Lowther Hills",
+    "lat": 55.346,
+    "lon": -3.554,
+    "sleeps": "2 + attic",
+    "gridRef": "NT016069",
+    "elevation": 275,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/southern-scotland/brattleburn/"
+  },
+  {
+    "id": "burleywhag",
+    "name": "Burleywhag",
+    "region": "Southern Scotland",
+    "cluster": "Lowther Hills",
+    "district": "Lowther Hills",
+    "lat": 55.284,
+    "lon": -3.622,
+    "sleeps": "2",
+    "gridRef": "NS971001",
+    "elevation": 360,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/southern-scotland/burleywhag/"
+  },
+  {
+    "id": "clennoch",
+    "name": "Clennoch",
+    "region": "Southern Scotland",
+    "cluster": "Galloway",
+    "district": "Galloway",
+    "lat": 55.276,
+    "lon": -4.201,
+    "sleeps": "6",
+    "gridRef": "NS603002",
+    "elevation": 416,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/southern-scotland/clennoch/"
+  },
+  {
+    "id": "dryfehead",
+    "name": "Dryfehead",
+    "region": "Southern Scotland",
+    "cluster": "Dumfriesshire",
+    "district": "Dumfriesshire",
+    "lat": 55.286,
+    "lon": -3.308,
+    "sleeps": "6",
+    "gridRef": "NY170999",
+    "elevation": 310,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/southern-scotland/dryfehead/"
+  },
+  {
+    "id": "gameshope",
+    "name": "Gameshope",
+    "region": "Southern Scotland",
+    "cluster": "Dumfriesshire",
+    "district": "Dumfriesshire",
+    "lat": 55.453,
+    "lon": -3.371,
+    "sleeps": "8",
+    "gridRef": "NT135185",
+    "elevation": 419,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/southern-scotland/gameshope/"
+  },
+  {
+    "id": "greensykes",
+    "name": "Greensykes",
+    "region": "Southern Scotland",
+    "cluster": "Dumfriesshire",
+    "district": "Dumfriesshire",
+    "lat": 55.29,
+    "lon": -3.084,
+    "sleeps": "8",
+    "gridRef": "NT312000",
+    "elevation": 268,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/southern-scotland/greensykes/"
+  },
+  {
+    "id": "kettleton-byre",
+    "name": "Kettleton Byre",
+    "region": "Southern Scotland",
+    "cluster": "Lowther Hills",
+    "district": "Lowther Hills",
+    "lat": 55.301,
+    "lon": -3.716,
+    "sleeps": "4",
+    "gridRef": "NS912021",
+    "elevation": 356,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/southern-scotland/kettleton-byre/"
+  },
+  {
+    "id": "leysburnfoot",
+    "name": "Leysburnfoot (Will's Bothy)",
+    "region": "Southern Scotland",
+    "cluster": "Liddesdale",
+    "district": "Liddesdale",
+    "lat": 55.272,
+    "lon": -2.732,
+    "sleeps": "—",
+    "gridRef": "NY536976",
+    "elevation": 250,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/southern-scotland/leysburnfoot-wills-bothy/"
+  },
+  {
+    "id": "over-phawhope",
+    "name": "Over Phawhope",
+    "region": "Southern Scotland",
+    "cluster": "Dumfriesshire",
+    "district": "Dumfriesshire",
+    "lat": 55.361,
+    "lon": -3.293,
+    "sleeps": "8",
+    "gridRef": "NT183082",
+    "elevation": 395,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/southern-scotland/over-phawhope/"
+  },
+  {
+    "id": "tunskeen",
+    "name": "Tunskeen",
+    "region": "Southern Scotland",
+    "cluster": "Galloway",
+    "district": "Galloway",
+    "lat": 55.184,
+    "lon": -4.476,
+    "sleeps": "6",
+    "gridRef": "NX425906",
+    "elevation": 324,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/southern-scotland/tunskeen/"
+  },
+  {
+    "id": "white-laggan",
+    "name": "White Laggan",
+    "region": "Southern Scotland",
+    "cluster": "Galloway",
+    "district": "Galloway",
+    "lat": 55.068,
+    "lon": -4.403,
+    "sleeps": "6",
+    "gridRef": "NX466775",
+    "elevation": 264,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/southern-scotland/white-laggan/"
+  },
+  {
+    "id": "cross-fell",
+    "name": "Cross Fell (Greg's Hut)",
+    "region": "Northern England & Borders",
+    "cluster": "North Pennines",
+    "district": "North Pennines",
+    "lat": 54.713,
+    "lon": -2.481,
+    "sleeps": "6–10",
+    "gridRef": "NY690355",
+    "elevation": 690,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/northern-england-borders/gregs-hut-cross-fell/"
+  },
+  {
+    "id": "dubs-hut",
+    "name": "Dubs Hut",
+    "region": "Northern England & Borders",
+    "cluster": "Lake District",
+    "district": "Lake District",
+    "lat": 54.51,
+    "lon": -3.223,
+    "sleeps": "—",
+    "gridRef": "NY209134",
+    "elevation": 480,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/northern-england-borders/dubs-hut/"
+  },
+  {
+    "id": "flittingford",
+    "name": "Flittingford",
+    "region": "Northern England & Borders",
+    "cluster": "Kielder",
+    "district": "Kielder",
+    "lat": 55.192,
+    "lon": -2.387,
+    "sleeps": "4",
+    "gridRef": "NY754886",
+    "elevation": 281,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/northern-england-borders/flittingford/"
+  },
+  {
+    "id": "great-lingy-hut",
+    "name": "Great Lingy Hut",
+    "region": "Northern England & Borders",
+    "cluster": "Lake District",
+    "district": "Lake District",
+    "lat": 54.694,
+    "lon": -3.068,
+    "sleeps": "3–4",
+    "gridRef": "NY312337",
+    "elevation": 600,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/northern-highlands/great-lingy-hut/"
+  },
+  {
+    "id": "green",
+    "name": "Green",
+    "region": "Northern England & Borders",
+    "cluster": "Kielder",
+    "district": "Kielder",
+    "lat": 55.101,
+    "lon": -2.409,
+    "sleeps": "—",
+    "gridRef": "NY740786",
+    "elevation": 272,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/northern-england-borders/green/",
+    "note": "Closed until further notice"
+  },
+  {
+    "id": "haughtongreen",
+    "name": "Haughtongreen",
+    "region": "Northern England & Borders",
+    "cluster": "Kielder",
+    "district": "Kielder",
+    "lat": 55.035,
+    "lon": -2.333,
+    "sleeps": "—",
+    "gridRef": "NY788713",
+    "elevation": 248,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/northern-england-borders/haughtongreen/"
+  },
+  {
+    "id": "kershopehead",
+    "name": "Kershopehead",
+    "region": "Northern England & Borders",
+    "cluster": "North Pennines",
+    "district": "North Pennines",
+    "lat": 55.169,
+    "lon": -2.717,
+    "sleeps": "2 + 10 floor",
+    "gridRef": "NY544863",
+    "elevation": 248,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/northern-england-borders/kershopehead/"
+  },
+  {
+    "id": "mosedale-cottage",
+    "name": "Mosedale Cottage",
+    "region": "Northern England & Borders",
+    "cluster": "Lake District",
+    "district": "Lake District",
+    "lat": 54.478,
+    "lon": -2.781,
+    "sleeps": "12+ floor",
+    "gridRef": "NY495095",
+    "elevation": 450,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/northern-england-borders/mosedale-cottage/"
+  },
+  {
+    "id": "roughside",
+    "name": "Roughside",
+    "region": "Northern England & Borders",
+    "cluster": "Kielder",
+    "district": "Kielder",
+    "lat": 55.143,
+    "lon": -2.401,
+    "sleeps": "—",
+    "gridRef": "NY745833",
+    "elevation": 220,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/northern-england-borders/roughside/"
+  },
+  {
+    "id": "spithope",
+    "name": "Spithope",
+    "region": "Northern England & Borders",
+    "cluster": "Cheviots",
+    "district": "Cheviots",
+    "lat": 55.344,
+    "lon": -2.367,
+    "sleeps": "—",
+    "gridRef": "NT769057",
+    "elevation": 340,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/northern-england-borders/spithope/"
+  },
+  {
+    "id": "wainhope",
+    "name": "Wainhope",
+    "region": "Northern England & Borders",
+    "cluster": "Kielder",
+    "district": "Kielder",
+    "lat": 55.226,
+    "lon": -2.519,
+    "sleeps": "—",
+    "gridRef": "NY671925",
+    "elevation": 270,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/northern-england-borders/wainhope/"
+  },
+  {
+    "id": "warnscale-head",
+    "name": "Warnscale Head",
+    "region": "Northern England & Borders",
+    "cluster": "Lake District",
+    "district": "Lake District",
+    "lat": 54.508,
+    "lon": -3.228,
+    "sleeps": "0",
+    "gridRef": "NY206132",
+    "elevation": 460,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/northern-england-borders/warnscale-head/",
+    "note": "Not suitable for overnight per MBA"
+  },
+  {
+    "id": "arenig-fawr",
+    "name": "Arenig Fawr",
+    "region": "Wales",
+    "cluster": "Snowdonia",
+    "district": "Snowdonia",
+    "lat": 52.929,
+    "lon": -3.712,
+    "sleeps": "3",
+    "gridRef": "SH851380",
+    "elevation": 400,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/wales/arenig-fawr/"
+  },
+  {
+    "id": "cae-amos",
+    "name": "Cae Amos",
+    "region": "Wales",
+    "cluster": "Snowdonia",
+    "district": "Snowdonia",
+    "lat": 52.986,
+    "lon": -4.211,
+    "sleeps": "—",
+    "gridRef": "SH517454",
+    "elevation": 216,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/wales/cae-amos/"
+  },
+  {
+    "id": "dulyn",
+    "name": "Dulyn",
+    "region": "Wales",
+    "cluster": "Snowdonia",
+    "district": "Snowdonia",
+    "lat": 53.179,
+    "lon": -3.939,
+    "sleeps": "0 + 10 floor",
+    "gridRef": "SH705664",
+    "elevation": 510,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/wales/dulyn/"
+  },
+  {
+    "id": "grwyne-fawr",
+    "name": "Grwyne Fawr",
+    "region": "Wales",
+    "cluster": "Black Mountains",
+    "district": "Black Mountains",
+    "lat": 51.974,
+    "lon": -3.129,
+    "sleeps": "4",
+    "gridRef": "SO225312",
+    "elevation": 552,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/wales/grwyne-fawr/"
+  },
+  {
+    "id": "lluest-cwm-bach",
+    "name": "Lluest Cwm Bach",
+    "region": "Wales",
+    "cluster": "Cambrian Mountains",
+    "district": "Cambrian Mountains",
+    "lat": 52.321,
+    "lon": -3.614,
+    "sleeps": "6–7",
+    "gridRef": "SN900705",
+    "elevation": 350,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/wales/lluest-cwmbach/"
+  },
+  {
+    "id": "moel-prysgau",
+    "name": "Moel Prysgau",
+    "region": "Wales",
+    "cluster": "Cambrian Mountains",
+    "district": "Cambrian Mountains",
+    "lat": 52.235,
+    "lon": -3.75,
+    "sleeps": "many",
+    "gridRef": "SN806611",
+    "elevation": 378,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/wales/moel-prysgau/"
+  },
+  {
+    "id": "nant-rhys",
+    "name": "Nant Rhys",
+    "region": "Wales",
+    "cluster": "Cambrian Mountains",
+    "district": "Cambrian Mountains",
+    "lat": 52.399,
+    "lon": -3.711,
+    "sleeps": "—",
+    "gridRef": "SN836792",
+    "elevation": 466,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/wales/nant-rhys/"
+  },
+  {
+    "id": "nant-syddion",
+    "name": "Nant Syddion",
+    "region": "Wales",
+    "cluster": "Cambrian Mountains",
+    "district": "Cambrian Mountains",
+    "lat": 52.396,
+    "lon": -3.804,
+    "sleeps": "18+",
+    "gridRef": "SN773791",
+    "elevation": 310,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/wales/nant-syddion/"
+  },
+  {
+    "id": "penrhos-isaf",
+    "name": "Penrhos Isaf",
+    "region": "Wales",
+    "cluster": "Snowdonia",
+    "district": "Snowdonia",
+    "lat": 52.798,
+    "lon": -3.874,
+    "sleeps": "—",
+    "gridRef": "SH737238",
+    "elevation": 169,
+    "mbaUrl": "https://www.mountainbothies.org.uk/bothies/wales/penrhos-isaf/"
+  }
 ];
+
+const SHREWSBURY = { lat: 52.7069, lon: -2.7538 };
 
 const REGION_ORDER = [
   "Wales","Northern England & Borders","Southern Scotland","Southwest Highlands & Islands",
@@ -283,7 +1703,6 @@ function haversine(lat1, lon1, lat2, lon2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
-// miles conversion
 const withDistance = BOTHIES.map(b => ({
   ...b,
   distance: Math.round(haversine(SHREWSBURY.lat, SHREWSBURY.lon, b.lat, b.lon) * 0.621371)
@@ -309,18 +1728,56 @@ const GROUPS = buildGroups(withDistance);
 const TOTAL = withDistance.length;
 
 // ---------- Storage ----------
-const STORAGE_KEY = "bothy-progress-v1";
+const STORAGE_KEY = "bothy-progress-v2";
+const THEME_KEY = "bothy-theme";
 function loadProgress() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
   catch(e) { return {}; }
 }
-function saveProgress(p) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
-}
+function saveProgress(p) { localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); }
+
 let progress = loadProgress();
 let openRegions = new Set([REGION_ORDER[0]]);
+let openDetails = new Set();
 let currentView = "checklist";
 let hideVisited = false;
+let searchQuery = "";
+let sortMode = "distance";
+
+// ---------- Theme ----------
+function initTheme() {
+  const saved = localStorage.getItem(THEME_KEY);
+  const theme = saved || "light";
+  document.body.setAttribute("data-theme", theme);
+  document.getElementById("themeToggle").textContent = theme === "dark" ? "☀" : "☾";
+}
+document.getElementById("themeToggle").onclick = () => {
+  const current = document.body.getAttribute("data-theme");
+  const next = current === "dark" ? "light" : "dark";
+  document.body.setAttribute("data-theme", next);
+  localStorage.setItem(THEME_KEY, next);
+  document.getElementById("themeToggle").textContent = next === "dark" ? "☀" : "☾";
+};
+initTheme();
+
+// ---------- Stalking season banner ----------
+function initSeasonBanner() {
+  const now = new Date();
+  const month = now.getMonth() + 1; // 1-12
+  const day = now.getDate();
+  const banner = document.getElementById("seasonBanner");
+  // Stag season: 1 Jul - 20 Oct (roughly, often starts being enforced mid-Sept). Hind season: 21 Oct - mid Feb.
+  const inStag = (month === 7) || (month === 8) || (month === 9) || (month === 10 && day <= 20);
+  const inHind = (month === 10 && day >= 21) || month === 11 || month === 12 || month === 1 || (month === 2 && day <= 15);
+  if (inStag) {
+    banner.textContent = "🦌 Stag stalking season is active in the Highlands (1 Jul – 20 Oct, heaviest from mid-Sept). Many Scottish estates restrict hill access — check individual estate notices before a trip.";
+    banner.classList.add("show");
+  } else if (inHind) {
+    banner.textContent = "🦌 Hind culling season is active in the Highlands (21 Oct – mid-Feb). Some estates may restrict access — check individual estate notices before a trip.";
+    banner.classList.add("show");
+  }
+}
+initSeasonBanner();
 
 // ---------- Render ----------
 function render() {
@@ -333,15 +1790,105 @@ function render() {
   document.getElementById("statLeft").textContent = (TOTAL - visitedCount) + " to go";
   document.getElementById("totalLabel").textContent = `from Shrewsbury · ${TOTAL} shelters`;
 
+  document.getElementById("searchRow").style.display = currentView === "checklist" ? "flex" : "none";
+  document.getElementById("hideToggleWrap").style.display = currentView === "checklist" ? "flex" : "none";
+
   if (currentView === "checklist") {
     document.getElementById("checklistView").style.display = "block";
     document.getElementById("planView").style.display = "none";
-    renderChecklist();
+    if (searchQuery.trim()) renderSearchResults(); else renderChecklist();
   } else {
     document.getElementById("checklistView").style.display = "none";
     document.getElementById("planView").style.display = "block";
     renderPlan();
   }
+}
+
+function ringSvg(pct, size = 30) {
+  const r = (size - 5) / 2;
+  const c = 2 * Math.PI * r;
+  const offset = c * (1 - pct / 100);
+  return `<svg class="ring" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="currentColor" stroke-opacity="0.25" stroke-width="3.5"/>
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--rust)" stroke-width="3.5"
+      stroke-dasharray="${c}" stroke-dashoffset="${offset}" stroke-linecap="round"
+      transform="rotate(-90 ${size/2} ${size/2})"/>
+  </svg>`;
+}
+
+function bothyDetailHtml(b) {
+  return `
+    <div class="detail-line">Grid ref ${b.gridRef} · ${b.elevation} m elevation ·
+      <a href="${b.mbaUrl}" target="_blank" rel="noopener">view on MBA site ↗</a>
+    </div>
+    <div class="detail-row">
+      <label for="date-${b.id}">Date bagged:</label>
+      <input type="date" id="date-${b.id}" value="${(progress[b.id] && progress[b.id].date) || ''}" />
+    </div>
+    <div class="notes-label">Notes</div>
+    <textarea class="notes-box" id="notes-${b.id}" placeholder="Weather, who you went with, how busy it was…">${(progress[b.id] && progress[b.id].notes) || ''}</textarea>
+  `;
+}
+
+function wireDetailInputs(b) {
+  const dateInput = document.getElementById(`date-${b.id}`);
+  const notesInput = document.getElementById(`notes-${b.id}`);
+  if (dateInput) {
+    dateInput.onchange = (e) => {
+      if (!progress[b.id]) progress[b.id] = {};
+      progress[b.id].date = e.target.value;
+      saveProgress(progress);
+      renderCurrentPreserveOpen();
+    };
+    dateInput.onclick = (e) => e.stopPropagation();
+  }
+  if (notesInput) {
+    notesInput.onclick = (e) => e.stopPropagation();
+    notesInput.onchange = (e) => {
+      if (!progress[b.id]) progress[b.id] = {};
+      progress[b.id].notes = e.target.value;
+      saveProgress(progress);
+    };
+  }
+}
+
+function renderBothyRow(b, container) {
+  const done = !!progress[b.id];
+  const detailOpen = openDetails.has(b.id);
+  const card = document.createElement("div");
+  card.className = "bothy-card";
+
+  const row = document.createElement("div");
+  row.className = "bothy-row" + (done ? " done" : "");
+  row.innerHTML = `
+    <div class="checkbox${done ? " done" : ""}">${done ? "✓" : ""}</div>
+    <div style="flex:1">
+      <div class="bothy-name${done ? " done" : ""}">${b.name}</div>
+      <div class="bothy-meta">${b.district} · sleeps ${b.sleeps} · ${b.distance} mi${done && progress[b.id].date ? " · bagged " + progress[b.id].date : ""}</div>
+      ${b.note ? `<div class="bothy-note">${b.note}</div>` : ""}
+    </div>
+    <button class="info-toggle" title="Details">${detailOpen ? "▲" : "ⓘ"}</button>
+  `;
+  row.querySelector(".checkbox").parentElement; // no-op, keep structure
+  row.onclick = (e) => {
+    if (e.target.closest(".info-toggle")) return;
+    toggle(b.id);
+  };
+  row.querySelector(".info-toggle").onclick = (e) => {
+    e.stopPropagation();
+    openDetails.has(b.id) ? openDetails.delete(b.id) : openDetails.add(b.id);
+    render();
+  };
+
+  const detail = document.createElement("div");
+  detail.className = "bothy-detail" + (detailOpen ? " open" : "");
+  detail.innerHTML = bothyDetailHtml(b);
+
+  card.appendChild(row);
+  card.appendChild(detail);
+  container.appendChild(card);
+
+  if (detailOpen) wireDetailInputs(b);
 }
 
 function renderChecklist() {
@@ -350,6 +1897,7 @@ function renderChecklist() {
   GROUPS.forEach(region => {
     const all = region.clusters.flatMap(c => c.bothies);
     const regionVisited = all.filter(b => progress[b.id]).length;
+    const regionPct = Math.round((regionVisited / all.length) * 100);
     const isOpen = openRegions.has(region.name);
 
     const regionDiv = document.createElement("div");
@@ -358,7 +1906,7 @@ function renderChecklist() {
     const btn = document.createElement("button");
     btn.className = "region-btn";
     btn.innerHTML = `<span class="left">${isOpen ? "▾" : "▸"} ${region.name}</span>
-      <span class="right mono">${regionVisited}/${all.length} · nearest ${Math.round(region.minDist)} mi</span>`;
+      <span class="right">${ringSvg(regionPct, 26)}<span class="mono">${regionVisited}/${all.length} · nearest ${Math.round(region.minDist)} mi</span></span>`;
     btn.onclick = () => { openRegions.has(region.name) ? openRegions.delete(region.name) : openRegions.add(region.name); render(); };
     regionDiv.appendChild(btn);
 
@@ -371,20 +1919,7 @@ function renderChecklist() {
       const clusterDiv = document.createElement("div");
       clusterDiv.className = "cluster";
       clusterDiv.innerHTML = `<div class="cluster-name">${cluster.name}</div>`;
-      visible.forEach(b => {
-        const done = !!progress[b.id];
-        const row = document.createElement("div");
-        row.className = "bothy-row" + (done ? " done" : "");
-        row.innerHTML = `
-          <div class="checkbox${done ? " done" : ""}">${done ? "✓" : ""}</div>
-          <div style="flex:1">
-            <div class="bothy-name${done ? " done" : ""}">${b.name}</div>
-            <div class="bothy-meta">${b.district} · sleeps ${b.sleeps} · ${b.distance} mi${done && progress[b.id].date ? " · bagged " + progress[b.id].date : ""}</div>
-            ${b.note ? `<div class="bothy-note">${b.note}</div>` : ""}
-          </div>`;
-        row.onclick = () => toggle(b.id);
-        clusterDiv.appendChild(row);
-      });
+      visible.forEach(b => renderBothyRow(b, clusterDiv));
       body.appendChild(clusterDiv);
     });
 
@@ -392,6 +1927,39 @@ function renderChecklist() {
     container.appendChild(regionDiv);
   });
 }
+
+function renderSearchResults() {
+  const container = document.getElementById("checklistView");
+  container.innerHTML = "";
+  const q = searchQuery.trim().toLowerCase();
+  let matches = withDistance.filter(b =>
+    b.name.toLowerCase().includes(q) ||
+    b.district.toLowerCase().includes(q) ||
+    b.region.toLowerCase().includes(q) ||
+    b.cluster.toLowerCase().includes(q)
+  );
+  if (hideVisited) matches = matches.filter(b => !progress[b.id]);
+  if (sortMode === "name") matches.sort((a,b) => a.name.localeCompare(b.name));
+  else matches.sort((a,b) => a.distance - b.distance);
+
+  const wrap = document.createElement("div");
+  wrap.className = "flat-list";
+  if (matches.length === 0) {
+    wrap.innerHTML = `<p style="color:var(--stone); font-size:14px;">No bothies match "${searchQuery}".</p>`;
+  } else {
+    matches.forEach(b => {
+      const tag = document.createElement("div");
+      tag.className = "flat-tag";
+      tag.style.margin = "0 0 2px 2px";
+      tag.textContent = `${b.region} · ${b.cluster}`;
+      wrap.appendChild(tag);
+      renderBothyRow(b, wrap);
+    });
+  }
+  container.appendChild(wrap);
+}
+
+function renderCurrentPreserveOpen() { render(); }
 
 function renderPlan() {
   const container = document.getElementById("planView");
@@ -419,25 +1987,99 @@ function renderPlan() {
   });
 }
 
-function toggle(id) {
-  if (progress[id]) delete progress[id];
-  else progress[id] = { date: new Date().toISOString().slice(0,10) };
-  saveProgress(progress);
-  render();
+function regionsFullyDone(justFinishedRegion) {
+  const region = GROUPS.find(r => r.name === justFinishedRegion);
+  if (!region) return false;
+  const all = region.clusters.flatMap(c => c.bothies);
+  return all.length > 0 && all.every(b => progress[b.id]);
 }
 
+function celebrate(regionName) {
+  const banner = document.createElement("div");
+  banner.className = "celebrate-banner";
+  banner.textContent = `🎉 ${regionName} complete — every bothy bagged!`;
+  document.body.appendChild(banner);
+  requestAnimationFrame(() => banner.classList.add("show"));
+
+  const wrap = document.createElement("div");
+  wrap.className = "confetti-wrap";
+  const colors = ["#A3572E", "#2F3B2E", "#6B7A7A", "#EFE8D8", "#9FB89A"];
+  for (let i = 0; i < 40; i++) {
+    const piece = document.createElement("div");
+    piece.className = "confetti-piece";
+    piece.style.left = Math.random() * 100 + "vw";
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.animationDuration = (2 + Math.random() * 1.5) + "s";
+    piece.style.animationDelay = (Math.random() * 0.4) + "s";
+    wrap.appendChild(piece);
+  }
+  document.body.appendChild(wrap);
+
+  setTimeout(() => banner.classList.remove("show"), 3200);
+  setTimeout(() => { banner.remove(); wrap.remove(); }, 3800);
+}
+
+function toggle(id) {
+  const b = withDistance.find(x => x.id === id);
+  const wasDone = !!progress[id];
+  if (wasDone) {
+    delete progress[id];
+  } else {
+    progress[id] = { date: new Date().toISOString().slice(0,10), notes: "" };
+  }
+  saveProgress(progress);
+  render();
+  if (!wasDone && b && regionsFullyDone(b.region)) {
+    celebrate(b.region);
+  }
+}
+
+// ---------- Where next? ----------
+function suggestBothy() {
+  const unvisited = withDistance.filter(b => !progress[b.id]);
+  if (unvisited.length === 0) return null;
+  // weight toward closer bothies: consider the nearest 30% (min 8) as the pool
+  const poolSize = Math.max(8, Math.round(unvisited.length * 0.3));
+  const pool = unvisited.slice(0, poolSize);
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function showSuggestion() {
+  const b = suggestBothy();
+  const modal = document.getElementById("whereNextModal");
+  if (!b) {
+    document.getElementById("wnRegion").textContent = "";
+    document.getElementById("wnName").textContent = "You've bagged them all!";
+    document.getElementById("wnMeta").textContent = "Every MBA bothy — well done.";
+    document.getElementById("wnAnother").style.display = "none";
+  } else {
+    document.getElementById("wnRegion").textContent = `${b.region} · ${b.cluster}`;
+    document.getElementById("wnName").textContent = b.name;
+    document.getElementById("wnMeta").textContent = `${b.distance} mi away · ${b.district} · sleeps ${b.sleeps}`;
+    document.getElementById("wnAnother").style.display = "inline-block";
+  }
+  modal.classList.add("show");
+}
+document.getElementById("whereNextBtn").onclick = showSuggestion;
+document.getElementById("wnAnother").onclick = showSuggestion;
+document.getElementById("wnClose").onclick = () => document.getElementById("whereNextModal").classList.remove("show");
+document.getElementById("whereNextModal").onclick = (e) => {
+  if (e.target.id === "whereNextModal") e.currentTarget.classList.remove("show");
+};
+
+// ---------- Controls ----------
 document.getElementById("tabChecklist").onclick = () => { currentView = "checklist"; setActiveTab(); render(); };
 document.getElementById("tabPlan").onclick = () => { currentView = "plan"; setActiveTab(); render(); };
 function setActiveTab() {
   document.getElementById("tabChecklist").classList.toggle("active", currentView === "checklist");
   document.getElementById("tabPlan").classList.toggle("active", currentView === "plan");
-  document.getElementById("hideToggleWrap").style.display = currentView === "checklist" ? "flex" : "none";
 }
 document.getElementById("hideVisited").onchange = (e) => { hideVisited = e.target.checked; render(); };
+document.getElementById("searchInput").oninput = (e) => { searchQuery = e.target.value; render(); };
+document.getElementById("sortSelect").onchange = (e) => { sortMode = e.target.value; render(); };
 
 render();
 
-// Register service worker for offline use, if hosted
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("sw.js").catch(() => {});

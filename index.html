@@ -214,6 +214,7 @@
         </div>
         <p class="tag">A personal round of every Mountain Bothies Association shelter in the UK. No clock running — just miles.</p>
       </div>
+      <button class="icon-btn" id="settingsToggle" title="Set your home location">⚙</button>
       <button class="icon-btn" id="themeToggle" title="Toggle dark mode">☾</button>
     </div>
 
@@ -259,6 +260,24 @@
   Always check <a href="https://www.mountainbothies.org.uk/bothies/" target="_blank">mountainbothies.org.uk</a>
   for current access restrictions before a trip. Distances are straight-line, not walking/driving miles.
 </footer>
+
+<div class="modal-backdrop" id="settingsModal">
+  <div class="modal" style="text-align:left;">
+    <h2 style="margin-top:0;">Your home location</h2>
+    <p class="modal-meta" style="margin-bottom:14px;">
+      Distances and trip-planner ordering are worked out from here. This is saved only on your
+      own device — everyone who uses this app sets their own.
+    </p>
+    <div class="modal-meta" id="settingsCurrent" style="margin-bottom:10px; color:var(--ink);"></div>
+    <input type="text" id="postcodeInput" placeholder="UK postcode, e.g. SY1 1JN"
+      style="width:100%; font-family:inherit; font-size:14px; padding:8px 10px; border:1.5px solid var(--stone); border-radius:3px; background:var(--paper); color:var(--ink);" />
+    <div id="settingsError" style="color:var(--rust); font-size:12.5px; margin-top:6px; display:none;"></div>
+    <div class="modal-actions" style="justify-content:flex-start; margin-top:14px;">
+      <button class="btn-primary" id="settingsSave">Save location</button>
+      <button class="btn-secondary" id="settingsClose">Cancel</button>
+    </div>
+  </div>
+</div>
 
 <div class="modal-backdrop" id="whereNextModal">
   <div class="modal">
@@ -1687,7 +1706,19 @@ const BOTHIES = [
   }
 ];
 
-const SHREWSBURY = { lat: 52.7069, lon: -2.7538 };
+const HOME_KEY = "bothy-home-location";
+const DEFAULT_HOME = { label: "Shrewsbury", lat: 52.7069, lon: -2.7538 };
+
+function loadHome() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(HOME_KEY));
+    if (saved && typeof saved.lat === "number" && typeof saved.lon === "number") return saved;
+  } catch (e) {}
+  return DEFAULT_HOME;
+}
+function saveHome(loc) { localStorage.setItem(HOME_KEY, JSON.stringify(loc)); }
+
+let HOME = loadHome();
 
 const REGION_ORDER = [
   "Wales","Northern England & Borders","Southern Scotland","Southwest Highlands & Islands",
@@ -1703,10 +1734,12 @@ function haversine(lat1, lon1, lat2, lon2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
-const withDistance = BOTHIES.map(b => ({
-  ...b,
-  distance: Math.round(haversine(SHREWSBURY.lat, SHREWSBURY.lon, b.lat, b.lon) * 0.621371)
-})).sort((a,b) => a.distance - b.distance);
+function computeDistances() {
+  return BOTHIES.map(b => ({
+    ...b,
+    distance: Math.round(haversine(HOME.lat, HOME.lon, b.lat, b.lon) * 0.621371)
+  })).sort((a,b) => a.distance - b.distance);
+}
 
 function buildGroups(list) {
   const regions = {};
@@ -1724,8 +1757,14 @@ function buildGroups(list) {
   }));
 }
 
-const GROUPS = buildGroups(withDistance);
-const TOTAL = withDistance.length;
+let withDistance = computeDistances();
+let GROUPS = buildGroups(withDistance);
+const TOTAL = BOTHIES.length;
+
+function recomputeForHome() {
+  withDistance = computeDistances();
+  GROUPS = buildGroups(withDistance);
+}
 
 // ---------- Storage ----------
 const STORAGE_KEY = "bothy-progress-v2";
@@ -1760,6 +1799,47 @@ document.getElementById("themeToggle").onclick = () => {
 };
 initTheme();
 
+// ---------- Settings (home location) ----------
+function openSettings() {
+  document.getElementById("settingsCurrent").textContent = `Currently: ${HOME.label}`;
+  document.getElementById("postcodeInput").value = "";
+  document.getElementById("settingsError").style.display = "none";
+  document.getElementById("settingsModal").classList.add("show");
+}
+document.getElementById("settingsToggle").onclick = openSettings;
+document.getElementById("settingsClose").onclick = () => document.getElementById("settingsModal").classList.remove("show");
+document.getElementById("settingsModal").onclick = (e) => {
+  if (e.target.id === "settingsModal") e.currentTarget.classList.remove("show");
+};
+
+document.getElementById("settingsSave").onclick = async () => {
+  const raw = document.getElementById("postcodeInput").value.trim();
+  const errorEl = document.getElementById("settingsError");
+  errorEl.style.display = "none";
+  if (!raw) { errorEl.textContent = "Enter a UK postcode."; errorEl.style.display = "block"; return; }
+  const saveBtn = document.getElementById("settingsSave");
+  saveBtn.textContent = "Looking up…";
+  saveBtn.disabled = true;
+  try {
+    const res = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(raw)}`);
+    const data = await res.json();
+    if (data.status !== 200 || !data.result) throw new Error("not found");
+    const r = data.result;
+    const label = r.admin_district || r.parish || r.postcode;
+    HOME = { label, lat: r.latitude, lon: r.longitude };
+    saveHome(HOME);
+    recomputeForHome();
+    document.getElementById("settingsModal").classList.remove("show");
+    render();
+  } catch (e) {
+    errorEl.textContent = "Couldn't find that postcode — double check it and try again.";
+    errorEl.style.display = "block";
+  } finally {
+    saveBtn.textContent = "Save location";
+    saveBtn.disabled = false;
+  }
+};
+
 // ---------- Stalking season banner ----------
 function initSeasonBanner() {
   const now = new Date();
@@ -1788,7 +1868,7 @@ function render() {
   document.getElementById("statBagged").textContent = visitedCount + " bagged";
   document.getElementById("statPct").textContent = pct + "%";
   document.getElementById("statLeft").textContent = (TOTAL - visitedCount) + " to go";
-  document.getElementById("totalLabel").textContent = `from Shrewsbury · ${TOTAL} shelters`;
+  document.getElementById("totalLabel").textContent = `from ${HOME.label} · ${TOTAL} shelters`;
 
   document.getElementById("searchRow").style.display = currentView === "checklist" ? "flex" : "none";
   document.getElementById("hideToggleWrap").style.display = currentView === "checklist" ? "flex" : "none";
